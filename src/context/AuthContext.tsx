@@ -1,11 +1,13 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { onAuthStateChanged, User as FirebaseUser, signOut, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { auth } from '../firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 
 interface UserProfile {
   id: string;
   name: string;
   email: string;
+  role: 'client' | 'admin' | 'worker';
 }
 
 interface AuthContextType {
@@ -25,14 +27,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setFirebaseUser(fbUser);
       if (fbUser) {
-        setUser({
-          id: fbUser.uid,
-          name: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
-          email: fbUser.email || '',
-        });
+        const userDocRef = doc(db, 'users', fbUser.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setUser({
+            id: fbUser.uid,
+            name: userData.displayName || fbUser.displayName || 'User',
+            email: fbUser.email || '',
+            role: userData.role || 'client',
+          });
+        } else {
+          // Create new user profile in Firestore
+          const newUser: UserProfile = {
+            id: fbUser.uid,
+            name: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
+            email: fbUser.email || '',
+            role: fbUser.email === 'darbarrahul99.99@gmail.com' ? 'admin' : 'client', // Default admin
+          };
+          
+          await setDoc(userDocRef, {
+            ...newUser,
+            createdAt: serverTimestamp(),
+          });
+          
+          setUser(newUser);
+        }
       } else {
         setUser(null);
       }

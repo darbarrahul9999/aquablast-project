@@ -9,6 +9,10 @@ import Services from './pages/Services';
 import Contact from './pages/Contact';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
+import AdminPanel from './pages/AdminPanel';
+import WorkerPortal from './pages/WorkerPortal';
+import ClientHome from './pages/ClientHome';
+import RoleGuard from './components/RoleGuard';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -32,7 +36,35 @@ export default function App() {
               <Route path="/services" element={<Services />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/auth" element={<Auth />} />
+              
+              {/* Smart Redirect Route */}
               <Route path="/dashboard" element={<Dashboard />} />
+
+              {/* Role-Specific Protected Routes */}
+              <Route 
+                path="/admin" 
+                element={
+                  <RoleGuard allowedRoles={['admin']}>
+                    <AdminPanel />
+                  </RoleGuard>
+                } 
+              />
+              <Route 
+                path="/worker" 
+                element={
+                  <RoleGuard allowedRoles={['worker']}>
+                    <WorkerPortal />
+                  </RoleGuard>
+                } 
+              />
+              <Route 
+                path="/client" 
+                element={
+                  <RoleGuard allowedRoles={['client']}>
+                    <ClientHome />
+                  </RoleGuard>
+                } 
+              />
             </Routes>
           </main>
           <Footer />

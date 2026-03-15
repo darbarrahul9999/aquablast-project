@@ -77,13 +77,17 @@ export default function Header() {
             {isAuthenticated ? (
               <div className="flex items-center gap-6">
                 <Link 
-                  to="/dashboard" 
+                  to={
+                    user?.role === 'admin' ? '/admin' :
+                    user?.role === 'worker' ? '/worker' :
+                    '/client'
+                  } 
                   className={cn(
                     "flex items-center gap-2 text-sm font-bold hover:text-brand-cyan transition-colors",
                     isScrolled ? "text-white" : "text-brand-charcoal"
                   )}
                 >
-                  <User className="w-4 h-4" /> DASHBOARD
+                  <User className="w-4 h-4" /> {user?.role?.toUpperCase()} SPACE
                 </Link>
                 <button 
                   onClick={logout}
@@ -141,10 +145,14 @@ export default function Header() {
               {isAuthenticated ? (
                 <>
                   <Link 
-                    to="/dashboard" 
+                    to={
+                      user?.role === 'admin' ? '/admin' :
+                      user?.role === 'worker' ? '/worker' :
+                      '/client'
+                    } 
                     className="block text-lg font-medium text-brand-cyan"
                   >
-                    DASHBOARD
+                    {user?.role?.toUpperCase()} SPACE
                   </Link>
                   <button 
                     onClick={logout}
