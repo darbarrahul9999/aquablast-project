@@ -19,7 +19,7 @@ The application follows a **Full-Stack SPA (Single Page Application)** architect
   - **Firebase Authentication**: Handles secure user sign-up, login (Email/Password & Google), and session management.
   - **Cloud Firestore**: A NoSQL document database providing real-time data synchronization via `onSnapshot` listeners.
 - **Security**:
-  - **Firestore Security Rules**: Implements granular access control to ensure users can only access their own data.
+  - **Firestore Security Rules**: Implements granular access control (RBAC). Clients are restricted to their own documents, while **Admins** have global read/write access to all collections for management purposes.
   - **Error Boundary**: Custom React Error Boundary to catch and report database permission issues.
 
 ---
@@ -96,22 +96,29 @@ Users with the `role: 'admin'` attribute in their Firestore document gain elevat
 
 ## 📐 ER Diagram (Entity-Relationship)
 
+The following diagram illustrates the detailed data structure and the primary relationships between users and their bookings, including administrative metadata.
+
 ```mermaid
 erDiagram
-    USER ||--o{ BOOKING : creates
+    USER ||--o{ BOOKING : "owns / manages"
     USER {
-        string uid PK
-        string email
-        string displayName
-        string createdAt
+        string uid PK "Firebase Auth UID"
+        string email "User Email"
+        string displayName "Full Name"
+        string role "client | admin"
+        string createdAt "ISO Timestamp"
     }
     BOOKING {
-        string bookingId PK
-        string userId FK
-        string service
-        string date
-        string status
-        string createdAt
+        string bookingId PK "Document ID"
+        string userId FK "Reference to USER.uid"
+        string service "Service Type"
+        string date "Scheduled Date"
+        string message "User Notes"
+        string status "pending | confirmed | cancelled | completed"
+        string adminNotes "Internal Admin Notes"
+        string assignedStaff "Staff Name"
+        string createdAt "Submission Time"
+        string updatedAt "Last Admin Update"
     }
 ```
 
@@ -120,78 +127,88 @@ erDiagram
 ## 🔄 Data Flow Diagrams (DFD)
 
 ### Level 0: Context Diagram
-The high-level view of the system's interactions with external entities.
+The high-level view of the system's interactions with both Client and Admin entities.
 
 ```mermaid
 graph TD
-    User((User))
+    User((Client User))
+    Admin((System Admin))
     UI[Aqua Blast System]
-    Auth[Firebase Auth]
-    DB[(Cloud Firestore)]
+    Auth[Firebase Auth Service]
+    DB[(Cloud Firestore DB)]
 
-    User -- Interacts --> UI
-    UI -- Credentials --> Auth
-    Auth -- Auth Token --> UI
-    UI -- Booking Data --> DB
-    DB -- Real-time Updates --> UI
-    UI -- Display Info --> User
+    User -- "Login / Book Service" --> UI
+    Admin -- "Manage Bookings / Users" --> UI
+    UI -- "Authentication Request" --> Auth
+    Auth -- "Identity Token" --> UI
+    UI -- "CRUD Operations" --> DB
+    DB -- "Real-time State Sync" --> UI
+    UI -- "Dashboard / Reports" --> User
+    UI -- "Admin Panel View" --> Admin
 ```
 
 ### Level 1: Process Decomposition
-Breaking down the system into its core functional processes.
+Breaking down the system into core functional processes with Admin integration.
 
 ```mermaid
 graph TD
-    User((User))
-    Admin((Admin))
+    User((Client User))
+    Admin((System Admin))
     
-    subgraph Processes
-        P1[1.0 Identity Management]
-        P2[2.0 Booking Engine]
-        P3[3.0 Profile Management]
+    subgraph "Aqua Blast Core Processes"
+        P1[1.0 Identity & Access]
+        P2[2.0 Booking Lifecycle]
+        P3[3.0 User Profiles]
+        P4[4.0 Admin Management]
     end
     
     D1[(Auth Store)]
     D2[(Firestore DB)]
 
-    User -- Login/Signup --> P1
-    P1 -- Verify --> D1
-    D1 -- Session --> P1
-    P1 -- User Profile --> P3
+    User -- "Auth Request" --> P1
+    Admin -- "Admin Auth" --> P1
+    P1 -- "Verify" --> D1
+    D1 -- "Session" --> P1
     
-    User -- Submit Request --> P2
-    P2 -- Store/Fetch --> D2
-    D2 -- Real-time Sync --> P2
-    P2 -- Dashboard View --> User
+    User -- "Create/View Booking" --> P2
+    Admin -- "Update Status/Notes" --> P2
+    P2 -- "Sync State" --> D2
+    D2 -- "Data Streams" --> P2
     
-    Admin -- Manage Status --> P2
-    Admin -- View All Data --> P2
-    P2 -- Admin View --> Admin
+    User -- "Update Info" --> P3
+    P3 -- "Store" --> D2
+    
+    Admin -- "Audit Logs / User List" --> P4
+    P4 -- "Query All" --> D2
 ```
 
-### Level 2: Booking Process Detail
-A deep dive into the internal logic of the Booking Engine (Process 2.0).
+### Level 2: Administrative & Booking Logic
+A deep dive into the internal logic of the Booking Engine and Admin interactions.
 
 ```mermaid
 graph LR
-    User((User))
+    User((Client))
+    Admin((Admin))
     
-    subgraph "2.0 Booking Engine"
-        P21[2.1 Validate Input]
-        P22[2.2 Write to Store]
-        P23[2.3 Listen for Changes]
-        P24[2.4 Update Status]
+    subgraph "2.0 Booking & Admin Engine"
+        P21[2.1 Request Validation]
+        P22[2.2 State Persistence]
+        P23[2.3 Real-time Dispatch]
+        P24[2.4 Admin Intervention]
     end
     
     DB[(Firestore)]
 
-    User -- Form Data --> P21
-    P21 -- Valid Data --> P22
-    P22 -- setDoc --> DB
-    DB -- onSnapshot --> P23
-    P23 -- UI Update --> User
-    User -- Cancel Request --> P24
-    P24 -- updateDoc --> DB
+    User -- "Form Data" --> P21
+    P21 -- "Validated" --> P22
+    P22 -- "setDoc" --> DB
+    DB -- "onSnapshot" --> P23
+    P23 -- "Client Dashboard" --> User
+    
+    Admin -- "Update Status/Staff" --> P24
+    P24 -- "updateDoc" --> DB
+    DB -- "Admin View" --> P23
+    P23 -- "Admin Panel" --> Admin
 ```
 
 ---
