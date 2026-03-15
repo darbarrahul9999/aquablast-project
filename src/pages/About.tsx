@@ -83,15 +83,15 @@ export default function About() {
             </p>
             <div className="flex flex-wrap justify-center gap-8 md:gap-16">
               <div className="text-center">
-                <div className="text-4xl font-bold text-brand-cyan mb-2">10+</div>
+                <div className="text-4xl font-bold text-brand-cyan mb-2">1+</div>
                 <div className="text-white/40 text-sm uppercase tracking-widest">Years Experience</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-bold text-brand-cyan mb-2">2k+</div>
+                <div className="text-4xl font-bold text-brand-cyan mb-2">20+</div>
                 <div className="text-white/40 text-sm uppercase tracking-widest">Happy Clients</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-bold text-brand-cyan mb-2">100%</div>
+                <div className="text-4xl font-bold text-brand-cyan mb-2">80%</div>
                 <div className="text-white/40 text-sm uppercase tracking-widest">Safety Record</div>
               </div>
             </div>
