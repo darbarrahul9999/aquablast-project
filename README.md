@@ -61,6 +61,7 @@ Stores service requests made by users.
 | `uid` | String | - | Unique identifier from Firebase Auth |
 | `email` | String | Email | User's registered email address |
 | `displayName`| String | - | User's full name or nickname |
+| `role` | String | Enum | User permission level (`client`, `admin`) |
 | `createdAt` | String | ISO 8601 | Timestamp of account creation |
 
 ### Entity: Booking
@@ -70,8 +71,11 @@ Stores service requests made by users.
 | `service` | String | - | Type of service requested (e.g., Residential) |
 | `date` | String | Date | Scheduled date for the service |
 | `message` | String | - | Additional notes or instructions |
-| `status` | String | Enum | `pending`, `confirmed`, `cancelled` |
+| `status` | String | Enum | `pending`, `confirmed`, `cancelled`, `completed` |
+| `adminNotes` | String | - | Internal notes added by administrators |
+| `assignedStaff` | String | - | Name of the staff member assigned to the job |
 | `createdAt` | String | ISO 8601 | Timestamp of booking submission |
+| `updatedAt` | String | ISO 8601 | Timestamp of the last administrative update |
 
 ---
 
