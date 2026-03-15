@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mail, Phone, MapPin, Send, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { handleFirestoreError, OperationType } from '../firestoreUtils';
 
 export default function Contact() {
-  const { user, token, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, firebaseUser } = useAuth();
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -20,45 +23,29 @@ export default function Contact() {
     setStatus('loading');
 
     try {
-      // If authenticated, create a real booking
-      if (isAuthenticated) {
-        const res = await fetch('/api/bookings', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            service: formData.service,
-            date: formData.date,
-            message: formData.message
-          })
-        });
-        if (res.ok) {
-          setStatus('success');
-          return;
-        }
-      }
-
-      // Fallback to legacy contact route
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
+      if (isAuthenticated && firebaseUser) {
+        await addDoc(collection(db, 'bookings'), {
+          userId: firebaseUser.uid,
+          service: formData.service,
+          date: formData.date,
+          message: formData.message,
+          status: 'pending',
+          createdAt: new Date().toISOString()
+        }).catch(err => handleFirestoreError(err, OperationType.CREATE, 'bookings'));
         setStatus('success');
-        setFormData({ ...formData, message: '' });
-      } else {
-        setStatus('error');
-        setErrorMessage(data.error || 'Something went wrong.');
+        return;
       }
-    } catch (error) {
+
+      // If not authenticated, we could still save to a 'leads' collection or similar
+      await addDoc(collection(db, 'leads'), {
+        ...formData,
+        createdAt: new Date().toISOString()
+      }).catch(err => handleFirestoreError(err, OperationType.CREATE, 'leads'));
+      setStatus('success');
+    } catch (error: any) {
+      console.error('Booking error:', error);
       setStatus('error');
-      setErrorMessage('Failed to connect to the server.');
+      setErrorMessage(error.message || 'Failed to process your request.');
     }
   };
 

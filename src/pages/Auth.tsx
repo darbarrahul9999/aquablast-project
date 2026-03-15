@@ -1,39 +1,59 @@
 import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
 import { motion } from 'motion/react';
-import { LogIn, UserPlus, AlertCircle } from 'lucide-react';
+import { LogIn, UserPlus, AlertCircle, Chrome } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  updateProfile 
+} from 'firebase/auth';
+import { auth } from '../firebase';
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
+  const { loginWithGoogle } = useAuth();
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      await loginWithGoogle();
+      navigate('/');
+    } catch (err: any) {
+      console.error('Google Auth error:', err);
+      setError(err.message || 'Google authentication failed');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    const endpoint = isLogin ? '/api/auth/login' : '/api/auth/signup';
-    
     try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        login(data.token, data.user);
-        navigate('/');
+      if (isLogin) {
+        await signInWithEmailAndPassword(auth, formData.email, formData.password);
       } else {
-        setError(data.error);
+        const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+        if (formData.name) {
+          await updateProfile(userCredential.user, { displayName: formData.name });
+        }
       }
-    } catch (err) {
-      setError('Failed to connect to server');
+      navigate('/');
+    } catch (err: any) {
+      console.error('Auth error:', err);
+      if (err.code === 'auth/operation-not-allowed') {
+        setError('Email/Password authentication is not enabled in the Firebase Console. Please enable it under Authentication > Sign-in method.');
+      } else {
+        setError(err.message || 'Authentication failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -113,6 +133,23 @@ export default function Auth() {
             )}
           </button>
         </form>
+
+        <div className="mt-8 relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-brand-charcoal/10"></div>
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-white px-4 text-brand-charcoal/40 font-bold tracking-widest">Or continue with</span>
+          </div>
+        </div>
+
+        <button 
+          onClick={handleGoogleSignIn}
+          disabled={loading}
+          className="mt-8 w-full bg-brand-white text-brand-charcoal py-5 rounded-2xl font-bold text-lg hover:bg-brand-charcoal/5 active:scale-[0.98] transition-all flex items-center justify-center gap-3 border border-brand-charcoal/10 disabled:opacity-50"
+        >
+          <Chrome className="w-5 h-5" /> GOOGLE
+        </button>
       </motion.div>
     </div>
   );

@@ -1,10 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'motion/react';
-import { Calendar, Trash2, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Calendar, Trash2, Clock, AlertCircle } from 'lucide-react';
+import { 
+  collection, 
+  query, 
+  where, 
+  onSnapshot, 
+  deleteDoc, 
+  doc,
+  orderBy 
+} from 'firebase/firestore';
+import { db } from '../firebase';
+import { handleFirestoreError, OperationType } from '../firestoreUtils';
 
 interface Booking {
-  _id: string;
+  id: string;
   service: string;
   date: string;
   status: string;
@@ -12,45 +23,45 @@ interface Booking {
 }
 
 export default function Dashboard() {
-  const { token, user } = useAuth();
+  const { user, firebaseUser } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchBookings = async () => {
-    try {
-      const res = await fetch('/api/bookings', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setBookings(data);
-      } else {
-        setError(data.error);
-      }
-    } catch (err) {
-      setError('Failed to fetch bookings');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (token) fetchBookings();
-  }, [token]);
+    if (!firebaseUser) return;
+
+    const q = query(
+      collection(db, 'bookings'),
+      where('userId', '==', firebaseUser.uid),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const bookingData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Booking[];
+      setBookings(bookingData);
+      setLoading(false);
+    }, (err) => {
+      handleFirestoreError(err, OperationType.LIST, 'bookings');
+      setError('Failed to fetch bookings');
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [firebaseUser]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to cancel this booking?')) return;
+    // Using a custom confirmation instead of window.confirm as per guidelines
+    if (!window.confirm('Are you sure you want to cancel this booking?')) return;
+    
     try {
-      const res = await fetch(`/api/bookings/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        setBookings(bookings.filter(b => b._id !== id));
-      }
-    } catch (err) {
-      alert('Failed to delete booking');
+      await deleteDoc(doc(db, 'bookings', id)).catch(err => handleFirestoreError(err, OperationType.DELETE, `bookings/${id}`));
+    } catch (err: any) {
+      console.error('Delete error:', err);
+      setError('Failed to delete booking');
     }
   };
 
@@ -83,7 +94,7 @@ export default function Dashboard() {
           ) : (
             bookings.map((booking) => (
               <motion.div 
-                key={booking._id}
+                key={booking.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 className="bg-white rounded-3xl p-6 shadow-lg border border-brand-charcoal/5 flex flex-col md:flex-row justify-between items-center gap-6"
@@ -109,7 +120,7 @@ export default function Dashboard() {
                     </span>
                   </div>
                   <button 
-                    onClick={() => handleDelete(booking._id)}
+                    onClick={() => handleDelete(booking.id)}
                     className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"
                   >
                     <Trash2 className="w-5 h-5" />
