@@ -75,6 +75,21 @@ Stores service requests made by users.
 
 ---
 
+## 🛡️ Admin Section (Administrative Capabilities)
+
+While the primary user interface focuses on client interactions, the system is architected with a robust Administrative layer.
+
+### Admin Role
+Users with the `role: 'admin'` attribute in their Firestore document gain elevated privileges. The system identifies the initial administrator via the primary developer email (`darbarrahul99.99@gmail.com`).
+
+### Administrative Functions
+- **Global Booking Oversight**: Admins can view all bookings across all users in the system.
+- **Status Management**: Ability to transition booking statuses (e.g., from `pending` to `confirmed` or `completed`).
+- **User Management**: Oversight of user profiles and account statuses.
+- **Security Enforcement**: All administrative actions are strictly validated via server-side Firestore Security Rules, preventing unauthorized privilege escalation.
+
+---
+
 ## 📐 ER Diagram (Entity-Relationship)
 
 ```mermaid
@@ -98,12 +113,15 @@ erDiagram
 
 ---
 
-## 🔄 Data Flow Diagram (DFD) - Level 0
+## 🔄 Data Flow Diagrams (DFD)
+
+### Level 0: Context Diagram
+The high-level view of the system's interactions with external entities.
 
 ```mermaid
 graph TD
     User((User))
-    UI[React Frontend]
+    UI[Aqua Blast System]
     Auth[Firebase Auth]
     DB[(Cloud Firestore)]
 
@@ -113,6 +131,63 @@ graph TD
     UI -- Booking Data --> DB
     DB -- Real-time Updates --> UI
     UI -- Display Info --> User
+```
+
+### Level 1: Process Decomposition
+Breaking down the system into its core functional processes.
+
+```mermaid
+graph TD
+    User((User))
+    Admin((Admin))
+    
+    subgraph Processes
+        P1[1.0 Identity Management]
+        P2[2.0 Booking Engine]
+        P3[3.0 Profile Management]
+    end
+    
+    D1[(Auth Store)]
+    D2[(Firestore DB)]
+
+    User -- Login/Signup --> P1
+    P1 -- Verify --> D1
+    D1 -- Session --> P1
+    P1 -- User Profile --> P3
+    
+    User -- Submit Request --> P2
+    P2 -- Store/Fetch --> D2
+    D2 -- Real-time Sync --> P2
+    P2 -- Dashboard View --> User
+    
+    Admin -- Manage Status --> P2
+    Admin -- View All Data --> P2
+    P2 -- Admin View --> Admin
+```
+
+### Level 2: Booking Process Detail
+A deep dive into the internal logic of the Booking Engine (Process 2.0).
+
+```mermaid
+graph LR
+    User((User))
+    
+    subgraph "2.0 Booking Engine"
+        P21[2.1 Validate Input]
+        P22[2.2 Write to Store]
+        P23[2.3 Listen for Changes]
+        P24[2.4 Update Status]
+    end
+    
+    DB[(Firestore)]
+
+    User -- Form Data --> P21
+    P21 -- Valid Data --> P22
+    P22 -- setDoc --> DB
+    DB -- onSnapshot --> P23
+    P23 -- UI Update --> User
+    User -- Cancel Request --> P24
+    P24 -- updateDoc --> DB
 ```
 
 ---
