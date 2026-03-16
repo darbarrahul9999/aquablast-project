@@ -78,7 +78,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h4 className="text-lg font-bold mb-1">Call Us</h4>
-                  <p className="text-brand-charcoal/60">(555) 123-4567</p>
+                  <p className="text-brand-charcoal/60">9773095119</p>
                   <p className="text-xs text-brand-cyan font-bold mt-1 uppercase tracking-widest">Mon-Fri: 8am - 6pm</p>
                 </div>
               </div>
@@ -88,7 +88,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h4 className="text-lg font-bold mb-1">Email Us</h4>
-                  <p className="text-brand-charcoal/60">hello@aquablast.com</p>
+                  <p className="text-brand-charcoal/60">Hello@aquablast.com</p>
                   <p className="text-xs text-brand-cyan font-bold mt-1 uppercase tracking-widest">24/7 Support</p>
                 </div>
               </div>
@@ -98,7 +98,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h4 className="text-lg font-bold mb-1">Our Location</h4>
-                  <p className="text-brand-charcoal/60">123 Pressure Way, Clean City</p>
+                  <p className="text-brand-charcoal/60">124,titanium mall,iskcon,A'bad</p>
                   <p className="text-xs text-brand-cyan font-bold mt-1 uppercase tracking-widest">Serving the Tri-State Area</p>
                 </div>
               </div>
