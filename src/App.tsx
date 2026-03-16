@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import AdminPanel from './pages/AdminPanel';
 import WorkerPortal from './pages/WorkerPortal';
 import ClientHome from './pages/ClientHome';
+import SystemArchitecture from './pages/SystemArchitecture';
 import RoleGuard from './components/RoleGuard';
 
 function ScrollToTop() {
@@ -36,6 +37,7 @@ export default function App() {
               <Route path="/services" element={<Services />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/architecture" element={<SystemArchitecture />} />
               
               {/* Smart Redirect Route */}
               <Route path="/dashboard" element={<Dashboard />} />

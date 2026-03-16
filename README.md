@@ -127,24 +127,28 @@ erDiagram
 ## 🔄 Data Flow Diagrams (DFD)
 
 ### Level 0: Context Diagram
-The high-level view of the system's interactions with both Client and Admin entities.
+The high-level view of the system's interactions with Client, Worker, and Admin entities.
 
 ```mermaid
 graph TD
-    User((Client User))
+    Client((Client User))
+    Worker((Field Worker))
     Admin((System Admin))
-    UI[Aqua Blast System]
-    Auth[Firebase Auth Service]
-    DB[(Cloud Firestore DB)]
+    System[Aqua Blast Restoration System]
 
-    User -- "Login / Book Service" --> UI
-    Admin -- "Manage Bookings / Users" --> UI
-    UI -- "Authentication Request" --> Auth
-    Auth -- "Identity Token" --> UI
-    UI -- "CRUD Operations" --> DB
-    DB -- "Real-time State Sync" --> UI
-    UI -- "Dashboard / Reports" --> User
-    UI -- "Admin Panel View" --> Admin
+    Client -- "1. Booking Requests" --> System
+    System -- "2. Status Updates" --> Client
+    
+    Admin -- "3. Assign Workers" --> System
+    System -- "4. Global Oversight" --> Admin
+    
+    Worker -- "5. Task Completion" --> System
+    System -- "6. Assigned Jobs" --> Worker
+
+    style System fill:#00E5FF,stroke:#141414,stroke-width:4px
+    style Client fill:#E4E3E0,stroke:#141414
+    style Worker fill:#E4E3E0,stroke:#141414
+    style Admin fill:#E4E3E0,stroke:#141414
 ```
 
 ### Level 1: Process Decomposition
